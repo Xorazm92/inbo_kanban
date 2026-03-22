@@ -1,7 +1,7 @@
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Platform } from 'react-native';
 
 const COLORS = [
   '#6C5CE7',
@@ -67,11 +67,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   selectedSwatch: {
     borderColor: Colors.fontLight,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 8px #fff',
+      },
+      ios: {
+        shadowColor: '#fff',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
 });
 export default Page;

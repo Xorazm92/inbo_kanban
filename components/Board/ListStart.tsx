@@ -84,11 +84,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderRadius: 12,
     ...Platform.select({
       web: { boxShadow: '0 4px 12px rgba(108, 92, 231, 0.4)' },
-      default: {
+      ios: {
         shadowColor: Colors.shadowPrimary,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.4,
         shadowRadius: 8,
+      },
+      android: {
         elevation: 4,
       },
     }),

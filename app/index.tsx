@@ -183,11 +183,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
       web: {
         boxShadow: '0 6px 24px rgba(108, 92, 231, 0.5)',
       },
-      default: {
+      ios: {
         shadowColor: Colors.shadowPrimary,
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.6,
         shadowRadius: 16,
+      },
+      android: {
         elevation: 8,
       },
     }),

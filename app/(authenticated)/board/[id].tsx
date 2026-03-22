@@ -14,6 +14,7 @@ const Page = () => {
   const { getBoardInfo, getBoardMember } = useSupabase();
   const [board, setBoard] = useState<Board>();
   const [members, setMembers] = useState<any[]>([]);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const headerHeight = useHeaderHeight();
@@ -34,7 +35,7 @@ const Page = () => {
   };
 
   const CustomHeader = () => (
-    <View style={[styles.headerSolid, { paddingTop: Platform.OS === 'web' ? 16 : top }]}>
+    <View style={StyleSheet.flatten([styles.headerSolid, { paddingTop: Platform.OS === 'web' ? 16 : top }])}>
       <View style={styles.headerContainer}>
         <Pressable
           onPress={() => router.dismiss()}
@@ -66,24 +67,35 @@ const Page = () => {
             </View>
           ))}
           <Link href={`/board/invite?id=${id}`} asChild>
-            <Pressable role="button" style={[styles.avatarCircle, { left: Math.min(members.length, 3) * -8, backgroundColor: Colors.primary }]}>
+            <View style={StyleSheet.flatten([styles.avatarCircle, { left: Math.min(members.length, 3) * -8, backgroundColor: Colors.primary }])}>
               <Ionicons name="add" size={14} color="#FFF" />
-            </Pressable>
+            </View>
           </Link>
         </View>
 
         <View style={styles.headerActions}>
-          <Pressable onPress={() => {}} role="button" style={styles.headerBtn}>
-            <Ionicons name="filter-outline" size={20} color={Colors.fontLight} />
-            {Platform.OS === 'web' && <Text style={styles.headerBtnText}>Filtrlar</Text>}
+          <Pressable
+            onPress={() => setShowOnlyMine(!showOnlyMine)}
+            role="button"
+            style={[styles.headerBtn, showOnlyMine && { backgroundColor: Colors.primary }]}>
+            <Ionicons
+              name="filter-outline"
+              size={20}
+              color={showOnlyMine ? '#fff' : Colors.fontLight}
+            />
+            {Platform.OS === 'web' && (
+              <Text style={[styles.headerBtnText, showOnlyMine && { color: '#fff' }]}>
+                {showOnlyMine ? 'Mening vazifalarim' : 'Filtrlar'}
+              </Text>
+            )}
           </Pressable>
           <Pressable onPress={() => {}} role="button" style={styles.headerIconBtn}>
             <Ionicons name="notifications-outline" size={20} color={Colors.fontLight} />
           </Pressable>
           <Link href={`/board/settings?id=${id}`} asChild>
-            <Pressable role="button" style={styles.headerIconBtn}>
+            <View style={StyleSheet.flatten(styles.headerIconBtn)}>
               <MaterialCommunityIcons name="dots-horizontal" size={20} color={Colors.fontLight} />
-            </Pressable>
+            </View>
           </Link>
         </View>
       </View>
@@ -99,14 +111,14 @@ const Page = () => {
           header: () => <CustomHeader />,
         }}
       />
-      {board && <BoardArea board={board} />}
+      {board && <BoardArea board={board} showOnlyMine={showOnlyMine} />}
     </View>
   );
 };
 
 const getStyles = (Colors: any) => StyleSheet.create({
   headerSolid: {
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderBottomWidth: 1,
     borderBottomColor: Colors.glassBorder,
   },
@@ -147,16 +159,30 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginRight: 16,
   },
   avatarCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: Colors.surface,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    backgroundColor: Colors.surfaceHover,
     overflow: 'hidden',
+    backgroundColor: Colors.surfaceHover,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   avatarImage: {
     width: 28,

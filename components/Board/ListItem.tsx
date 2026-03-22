@@ -27,8 +27,16 @@ const getBadge = (id: string, index: number) => {
 
 const formatDate = (date: string) => {
   const d = new Date(date);
+  const now = new Date();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}`;
+  
+  const isOverdue = d < now;
+  const isToday = d.toDateString() === now.toDateString();
+  
+  return {
+    text: isToday ? 'Bugun' : `${months[d.getMonth()]} ${d.getDate()}`,
+    isOverdue
+  };
 };
 
 const ListItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Task>) => {
@@ -80,6 +88,7 @@ const ListItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Task>) =>
           <Image
             source={{ uri: imagePath }}
             style={styles.cardImage}
+            resizeMode="cover"
           />
         ) : null}
 
@@ -111,9 +120,33 @@ const ListItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Task>) =>
               <Text style={styles.unassigned}>Unassigned</Text>
             )}
           </View>
-          <View style={styles.dateSection}>
-            <Ionicons name="calendar-outline" size={12} color={'#888'} />
-            <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            {item.estimated_hours ? (
+              <View style={styles.effortBadge}>
+                <Ionicons name="time-outline" size={12} color={Colors.fontSecondary} />
+                <Text style={styles.dateText}>{item.estimated_hours}s</Text>
+              </View>
+            ) : null}
+            
+            <View style={styles.dateSection}>
+              {item.due_date ? (
+                <>
+                  <Ionicons 
+                    name="calendar-outline" 
+                    size={12} 
+                    color={formatDate(item.due_date).isOverdue ? Colors.danger : '#888'} 
+                  />
+                  <Text style={[styles.dateText, formatDate(item.due_date).isOverdue && { color: Colors.danger, fontWeight: '700' }]}>
+                    {formatDate(item.due_date).text}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="calendar-outline" size={12} color={'#888'} />
+                  <Text style={styles.dateText}>{formatDate(item.created_at).text}</Text>
+                </>
+              )}
+            </View>
           </View>
         </View>
       </Pressable>
@@ -129,11 +162,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.glassBorder,
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
 
   // Header
@@ -168,10 +210,10 @@ const getStyles = (Colors: any) => StyleSheet.create({
   // Title - Serif styling
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
     color: Colors.fontLight,
     lineHeight: 22,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontWeight: '500',
   },
 
   // Description
@@ -228,6 +270,15 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontSize: 11,
     color: Colors.fontSecondary,
     fontWeight: '500',
+  },
+  effortBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: Colors.surfaceHover,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
 });
 

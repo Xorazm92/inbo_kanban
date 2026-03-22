@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Link, Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 const Page = () => {
   const [boardName, setBoardName] = useState('');
@@ -22,6 +23,7 @@ const Page = () => {
   }, [bg]);
 
   const onCreateBoard = async () => {
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await createBoard!(boardName, selectedColor);
     router.dismiss();
   };
@@ -68,11 +70,11 @@ const Page = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Asosiy rang</Text>
           <Link href={'/boards/new-board/color-select'} asChild>
-            <Pressable style={styles.btnItem} role="button">
+            <View style={StyleSheet.flatten(styles.btnItem)}>
               <View style={[styles.colorPreview, { backgroundColor: selectedColor }]} />
               <Text style={styles.btnItemText}>Rangni o'zgartirish</Text>
               <Ionicons name="chevron-forward" size={20} color={Colors.grey} />
-            </Pressable>
+            </View>
           </Link>
         </View>
       </View>
@@ -98,13 +100,17 @@ const getStyles = (Colors: any) => StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(108, 92, 231, 0.4)' },
-      default: {
+      web: {
+        boxShadow: `0 6px 12px ${Colors.shadowPrimary || 'rgba(0,0,0,0.3)'}`,
+      },
+      ios: {
         shadowColor: Colors.shadowPrimary,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
       },
     }),
   },

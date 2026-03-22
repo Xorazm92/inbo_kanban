@@ -1,7 +1,7 @@
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet, Platform } from 'react-native';
 
 const Layout = () => {
   const router = useRouter();
@@ -70,11 +70,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 0 6px ${Colors.primary}`,
+      },
+      ios: {
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   logoText: {
     fontSize: 22,

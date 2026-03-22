@@ -104,7 +104,7 @@ const Page = () => {
     <Link
       href={`/board/${item.id}?bg=${encodeURIComponent(item.background)}`}
       asChild>
-      <Pressable style={styles.listItem}>
+      <View style={StyleSheet.flatten(styles.listItem)}>
         {/* Color Block with inner glow */}
         <View style={styles.colorBlockContainer}>
           <View style={[styles.colorBlock, { backgroundColor: item.background }]}>
@@ -133,7 +133,7 @@ const Page = () => {
         <View style={styles.arrowContainer}>
           <Ionicons name="chevron-forward" size={18} color={Colors.fontSecondary} />
         </View>
-      </Pressable>
+      </View>
     </Link>
   );
 
@@ -179,10 +179,10 @@ const Page = () => {
             </Pressable>
 
             <Link href="/boards/new-board" asChild>
-              <Pressable style={styles.newBoardButton} role="button">
+              <View style={StyleSheet.flatten(styles.newBoardButton)}>
                 <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
                 <Text style={styles.newBoardButtonText}>Yangi doska yaratish</Text>
-              </Pressable>
+              </View>
             </Link>
 
             {/* Feature highlights */}
@@ -346,7 +346,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 8,
       },
-      android: { elevation: 4 },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 4px 8px rgba(0,0,0,0.25)',
+      },
     }),
   },
   colorBlock: {
@@ -462,11 +467,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: 12,
     ...Platform.select({
       web: { boxShadow: '0 8px 24px rgba(108, 92, 231, 0.5)' },
-      default: {
+      ios: {
         shadowColor: Colors.shadowPrimary,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.5,
         shadowRadius: 16,
+      },
+      android: {
         elevation: 10,
       },
     }),

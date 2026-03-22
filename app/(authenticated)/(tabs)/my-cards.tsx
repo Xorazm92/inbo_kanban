@@ -27,6 +27,20 @@ const Page = () => {
     setRefreshing(false);
   };
 
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const isOverdue = d < now;
+    const isToday = d.toDateString() === now.toDateString();
+    
+    return {
+      text: isToday ? 'Bugun' : `${months[d.getMonth()]} ${d.getDate()}`,
+      isOverdue
+    };
+  };
+
   const renderCard = ({ item }: { item: Task }) => (
     <Pressable
       style={styles.cardItem}
@@ -35,9 +49,33 @@ const Page = () => {
       <View style={styles.accentBar} />
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle}>{item.title}</Text>
-        <View style={styles.boardBadge}>
-          <Ionicons name="apps-outline" size={12} color={Colors.fontSecondary} />
-          <Text style={styles.boardTitle}>{(item as any).boards?.title}</Text>
+        <View style={styles.cardFooter}>
+          <View style={styles.boardBadge}>
+            <Ionicons name="apps-outline" size={12} color={Colors.fontSecondary} />
+            <Text style={styles.boardTitle}>{(item as any).boards?.title}</Text>
+          </View>
+          
+          <View style={styles.metaInfo}>
+            {item.estimated_hours ? (
+              <View style={styles.metaItem}>
+                <Ionicons name="time-outline" size={12} color={Colors.fontSecondary} />
+                <Text style={styles.metaText}>{item.estimated_hours}s</Text>
+              </View>
+            ) : null}
+
+            {item.due_date && (
+              <View style={styles.metaItem}>
+                <Ionicons 
+                  name="calendar-outline" 
+                  size={12} 
+                  color={formatDate(item.due_date).isOverdue ? Colors.danger : Colors.fontSecondary} 
+                />
+                <Text style={[styles.metaText, formatDate(item.due_date).isOverdue && { color: Colors.danger, fontWeight: '700' }]}>
+                  {formatDate(item.due_date).text}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
       <Ionicons name="chevron-forward" size={20} color={Colors.grey} />
@@ -113,6 +151,26 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   boardTitle: {
     fontSize: 12,
+    color: Colors.fontSecondary,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 11,
     color: Colors.fontSecondary,
   },
   emptyContainer: {

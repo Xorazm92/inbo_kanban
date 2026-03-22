@@ -5,12 +5,14 @@ import { Board, User } from '@/types/enums';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Pressable, StyleSheet, FlatList, Platform, Alert } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
+import { useAuth } from '@/context/ClerkContext';
 
 const Page = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { getBoardInfo, updateBoard, deleteBoard, getBoardMember } = useSupabase();
+  const { getBoardInfo, updateBoard, deleteBoard, getBoardMember, removeUserFromBoard } = useSupabase();
+  const { userId } = useAuth();
   const router = useRouter();
   const [board, setBoard] = useState<Board>();
   const [member, setMember] = useState<User[]>();
@@ -33,8 +35,49 @@ const Page = () => {
   };
 
   const onDelete = async () => {
-    await deleteBoard!(`${id}`);
-    router.dismissAll();
+    Alert.alert(
+      "Doskani yopish",
+      "Haqiqatan ham ushbu doskani o'chirib tashlamoqchimisiz? Bu amalni qaytarib bo'lmaydi.",
+      [
+        { text: "Bekor qilish", style: "cancel" },
+        { 
+          text: "O'chirish", 
+          style: "destructive",
+          onPress: async () => {
+            await deleteBoard!(`${id}`);
+            router.dismissAll();
+          }
+        }
+      ]
+    );
+  };
+
+  const onRemoveMember = async (memberId: string) => {
+    if (board?.creator !== userId) {
+      Alert.alert("Ruxsat yo'q", "Faqat doska egasi a'zolarni o'chira oladi.");
+      return;
+    }
+
+    if (memberId === userId) {
+      Alert.alert("Xato", "O'zingizni doskadan o'chira olmaysiz.");
+      return;
+    }
+
+    Alert.alert(
+      "A'zoni o'chirish",
+      "Ushbu foydalanuvchini doskadan chetlatmoqchimisiz?",
+      [
+        { text: "Bekor qilish", style: "cancel" },
+        { 
+          text: "O'chirish", 
+          style: "destructive",
+          onPress: async () => {
+            await removeUserFromBoard!(`${id}`, memberId);
+            loadInfo();
+          }
+        }
+      ]
+    );
   };
 
   const onUpdateBoard = async () => {
@@ -48,10 +91,9 @@ const Page = () => {
         <View>
           <Text style={styles.label}>Doska nomi</Text>
           <TextInput
-            value={board?.title}
+            value={board?.title || ''}
             onChangeText={(e) => setBoard({ ...board!, title: e })}
             style={styles.input}
-            returnKeyType="done"
             enterKeyHint="done"
             onEndEditing={onUpdateBoard}
             placeholderTextColor={Colors.grey}
@@ -68,16 +110,21 @@ const Page = () => {
         <FlatList
           data={member}
           keyExtractor={(item) => `${item.id}`}
-          renderItem={(item) => <UserListItem onPress={() => {}} element={item} />}
+          renderItem={(info) => (
+            <UserListItem 
+              onPress={() => onRemoveMember(info.item.id)} 
+              element={info} 
+            />
+          )}
           contentContainerStyle={{ gap: 8 }}
           style={{ marginVertical: 12 }}
         />
 
         <Link href={`/board/invite?id=${id}`} asChild>
-          <Pressable style={styles.fullBtn} role="button">
+          <View style={StyleSheet.flatten(styles.fullBtn)}>
             <Ionicons name="person-add-outline" size={18} color="#fff" />
             <Text style={styles.fullBtnText}>Taklif qilish...</Text>
-          </Pressable>
+          </View>
         </Link>
       </View>
 
@@ -144,11 +191,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.shadowPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 4px 10px ${Colors.shadowPrimary || 'rgba(0,0,0,0.3)'}`,
+      },
+      ios: {
+        shadowColor: Colors.shadowPrimary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   fullBtnText: {
     fontSize: 16,

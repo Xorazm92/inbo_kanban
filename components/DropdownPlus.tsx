@@ -1,7 +1,7 @@
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 
 const DropdownPlus = () => {
@@ -69,11 +69,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.shadowPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 6,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 4px 8px ${Colors.shadowPrimary || 'rgba(0,0,0,0.4)'}`,
+      },
+      ios: {
+        shadowColor: Colors.shadowPrimary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.6,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
 });
 

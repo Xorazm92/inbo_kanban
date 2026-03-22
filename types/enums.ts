@@ -33,8 +33,8 @@ export interface TaskListFake {
 
 export interface Task {
   id: string;
-  list_id: number;
-  board_id: number;
+  list_id: string;
+  board_id: string;
   position: number;
   title: string;
   description: string | null;
@@ -42,6 +42,7 @@ export interface Task {
   done: boolean;
   image_url?: string;
   due_date?: string | null;
+  estimated_hours?: number | null;
   created_at: string;
   users?: User;
 }
@@ -56,7 +57,7 @@ export interface User {
 
 export interface Comment {
   id: string;
-  card_id: number;
+  card_id: string;
   user_id: string;
   text: string;
   created_at: string;
@@ -65,21 +66,21 @@ export interface Comment {
 
 export interface Label {
   id: string;
-  board_id: number;
+  board_id: string;
   title: string;
   color: string;
   created_at: string;
 }
 
 export interface CardLabel {
-  card_id: number;
-  label_id: number;
+  card_id: string;
+  label_id: string;
   labels?: Label;
 }
 
 export interface Checklist {
   id: string;
-  card_id: number;
+  card_id: string;
   title: string;
   created_at: string;
   checklist_items?: ChecklistItem[];
@@ -87,7 +88,7 @@ export interface Checklist {
 
 export interface ChecklistItem {
   id: string;
-  checklist_id: number;
+  checklist_id: string;
   title: string;
   done: boolean;
   position: number;

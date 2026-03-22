@@ -3,7 +3,7 @@ import { useSupabase } from '@/context/SupabaseContext';
 import { Task, TaskList } from '@/types/enums';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Platform, Alert } from 'react-native';
 import DraggableFlatList, { DragEndParams } from 'react-native-draggable-flatlist';
 import * as Haptics from 'expo-haptics';
 import {
@@ -32,9 +32,10 @@ export interface ListViewProps {
   taskList: TaskList;
   onDelete: () => void;
   listIndex?: number;
+  showOnlyMine?: boolean;
 }
 
-const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
+const ListView = ({ taskList, onDelete, listIndex = 0, showOnlyMine = false }: ListViewProps) => {
   const {
     getListCards,
     addListCard,
@@ -47,12 +48,16 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [tasks, setTasks] = useState<any[]>([]);
-
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['40%'], []);
-
   const [listName, setListName] = useState(taskList.title);
   const { userId } = useAuth();
+
+  const filteredTasks = useMemo(() => {
+    if (!showOnlyMine) return tasks;
+    return tasks.filter(t => t.assigned_to === userId);
+  }, [tasks, showOnlyMine, userId]);
+
+  const snapPoints = useMemo(() => ['40%'], []);
   const status = getStatus(listIndex);
   const Colors = useThemeColors();
   const styles = getStyles(Colors);
@@ -93,9 +98,22 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
   };
 
   const onDeleteList = async () => {
-    await deleteBoardList!(taskList.id);
-    bottomSheetModalRef.current?.close();
-    onDelete();
+    Alert.alert(
+      "Ro'yxatni o'chirish",
+      "Haqiqatan ham ushbu ro'yxatni va uning barcha kartalarini o'chirib tashlamoqchimisiz?",
+      [
+        { text: "Bekor qilish", style: "cancel" },
+        { 
+          text: "O'chirish", 
+          style: "destructive",
+          onPress: async () => {
+            await deleteBoardList!(taskList.id);
+            bottomSheetModalRef.current?.close();
+            onDelete();
+          }
+        }
+      ]
+    );
   };
 
   const onUpdateTaskList = async () => {
@@ -172,7 +190,7 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
           <View style={[styles.statusDot, { backgroundColor: status.color }]} />
           <Text style={styles.columnTitle}>{listName}</Text>
           <View style={styles.cardCountBadge}>
-            <Text style={styles.cardCountText}>{tasks.length}</Text>
+            <Text style={styles.cardCountText}>{filteredTasks.length}</Text>
           </View>
           <Text style={styles.columnEmoji}>{status.emoji}</Text>
         </Pressable>
@@ -180,7 +198,7 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
         {/* Cards Container */}
         <View style={styles.cardsContainer}>
           <DraggableFlatList
-            data={tasks}
+            data={filteredTasks}
             renderItem={ListItem}
             keyExtractor={(item) => `${item.id}`}
             onDragEnd={onTaskDropped}
@@ -268,7 +286,7 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
               enterKeyHint="done"
               onEndEditing={onUpdateTaskList}
               onChangeText={(e) => setListName(e)}
-              value={listName}
+              value={listName || ''}
               placeholderTextColor={Colors.grey}
             />
           </View>

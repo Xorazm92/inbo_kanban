@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from 'react';
 import { client, setSupabaseTokenGetter } from '@/utils/supabaseClient';
-import { useAuth } from '@/context/ClerkContext';
+import { useAuth, useUser } from '@/context/ClerkContext';
 import { Board, Task, TaskList } from '@/types/enums';
 import { decode } from 'base64-arraybuffer';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -34,6 +34,8 @@ type ProviderProps = {
   ) => Promise<any>;
   updateCard: (task: Task) => Promise<any>;
   assignCard: (cardId: string, userId: string) => Promise<any>;
+  moveCardToList: (cardId: string, newListId: string, newPosition?: number) => Promise<any>;
+  removeUserFromBoard: (boardId: string, userId: string) => Promise<any>;
   deleteCard: (id: string) => Promise<any>;
   getCardInfo: (id: string) => Promise<any>;
   findUsers: (search: string) => Promise<any>;
@@ -63,16 +65,30 @@ export function useSupabase() {
 
 export const SupabaseProvider = ({ children }: any) => {
   const { userId, getToken } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     setSupabaseTokenGetter(() => getToken({ template: 'supabase' }));
     setRealtimeAuth();
-    if (userId) {
-      client.from(USERS_TABLE).upsert({ id: userId }).then(({ error }) => {
-        if (error) console.warn('User Sync Error:', error.message);
-      });
+
+    if (userId && user) {
+      const email = user.emailAddresses[0]?.emailAddress;
+      const firstName = user.firstName;
+      const avatarUrl = user.imageUrl;
+
+      client
+        .from(USERS_TABLE)
+        .upsert({ 
+          id: userId, 
+          email: email, 
+          first_name: firstName, 
+          avatar_url: avatarUrl 
+        })
+        .then(({ error }) => {
+          if (error) console.warn('User Sync Error:', error.message);
+        });
     }
-  }, [userId, getToken]);
+  }, [userId, user, getToken]);
 
   const setRealtimeAuth = async () => {
     try {
@@ -100,8 +116,11 @@ export const SupabaseProvider = ({ children }: any) => {
       .select('*')
       .single();
 
-    if (error) {
-      console.error('Error creating board:', error);
+    if (data?.id) {
+      await client.from(USER_BOARDS_TABLE).insert({
+        user_id: userId,
+        board_id: data.id,
+      });
     }
 
     return data;
@@ -221,6 +240,15 @@ export const SupabaseProvider = ({ children }: any) => {
       .single();
   };
 
+  const moveCardToList = async (cardId: string, newListId: string, newPosition = 0) => {
+    return await client
+      .from(CARDS_TABLE)
+      .update({ list_id: newListId, position: newPosition })
+      .match({ id: cardId })
+      .select('*')
+      .single();
+  };
+
   const deleteCard = async (id: string) => {
     return await client.from(CARDS_TABLE).delete().match({ id: id });
   };
@@ -235,9 +263,18 @@ export const SupabaseProvider = ({ children }: any) => {
   };
 
   const findUsers = async (search: string) => {
-    // Use the search_users stored procedure to find users by email
-    const { data } = await client.rpc('search_users', { search: search });
+    const { data } = await client
+      .from(USERS_TABLE)
+      .select('*')
+      .or(`email.ilike.%${search}%,first_name.ilike.%${search}%`);
     return data;
+  };
+  const removeUserFromBoard = async (boardId: string, userId: string) => {
+    return await client
+      .from(USER_BOARDS_TABLE)
+      .delete()
+      .eq('board_id', boardId)
+      .eq('user_id', userId);
   };
 
   const addUserToBoard = async (boardId: string, userId: string) => {
@@ -267,7 +304,12 @@ export const SupabaseProvider = ({ children }: any) => {
       .channel(`card-changes-${id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: CARDS_TABLE },
+        {
+          event: '*',
+          schema: 'public',
+          table: CARDS_TABLE,
+          filter: `list_id=eq.${id}`,
+        },
         handleRealtimeChanges
       )
       .subscribe();
@@ -363,6 +405,8 @@ export const SupabaseProvider = ({ children }: any) => {
     addListCard,
     updateCard,
     assignCard,
+    moveCardToList,
+    removeUserFromBoard,
     deleteCard,
     getCardInfo,
     findUsers,

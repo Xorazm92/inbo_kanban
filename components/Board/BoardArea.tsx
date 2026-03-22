@@ -3,16 +3,17 @@ import ListView from '@/components/Board/ListView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSupabase } from '@/context/SupabaseContext';
 import { Board, TaskList, TaskListFake } from '@/types/enums';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 export interface BoardAreaProps {
   board?: Board;
+  showOnlyMine?: boolean;
 }
 
-const BoardArea = ({ board }: BoardAreaProps) => {
+const BoardArea = ({ board, showOnlyMine = false }: BoardAreaProps) => {
   const { getBoardLists, addBoardList } = useSupabase();
   const [startListActive, setStartListActive] = useState(false);
   const [data, setData] = useState<Array<TaskList | TaskListFake>>([{ id: undefined }]);
@@ -41,44 +42,58 @@ const BoardArea = ({ board }: BoardAreaProps) => {
     setData(data.filter((item) => item.id !== id));
   };
 
+  const renderLists = useMemo(() => {
+    return data.map((item, index) => (
+      <View key={item.id ? `list-${item.id}` : `add-list`} style={styles.columnWrapper}>
+        {item.id && (
+          <ListView
+            taskList={item as TaskList}
+            listIndex={index}
+            onDelete={() => onListDeleted(item.id!)}
+            showOnlyMine={showOnlyMine}
+          />
+        )}
+        {item.id === undefined && (
+          <View style={styles.addListContainer}>
+            {!startListActive && (
+              <Pressable onPress={() => setStartListActive(true)} style={styles.listAddBtn}>
+                <Ionicons name="add" size={20} color={Colors.fontLight} />
+                <Text style={styles.listAddText}>Ro'yxat qo'shish</Text>
+              </Pressable>
+            )}
+
+            {startListActive && (
+              <ListStart onCancel={() => setStartListActive(false)} onSave={onSaveNewList} />
+            )}
+          </View>
+        )}
+      </View>
+    ));
+  }, [data, startListActive, showOnlyMine, Colors]);
+
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.boardContainer}
         keyboardShouldPersistTaps="always"
       >
-        {data.map((item, index) => (
-          <View key={item.id ? `list-${item.id}` : `add-list`} style={styles.columnWrapper}>
-            {item.id && <ListView taskList={item} listIndex={index} onDelete={() => onListDeleted(item.id)} />}
-            {item.id === undefined && (
-              <View style={styles.addListContainer}>
-                {!startListActive && (
-                  <Pressable onPress={() => setStartListActive(true)} style={styles.listAddBtn}>
-                    <Ionicons name="add" size={20} color={Colors.fontLight} />
-                    <Text style={styles.listAddText}>Ro'yxat qo'shish</Text>
-                  </Pressable>
-                )}
-
-                {startListActive && (
-                  <ListStart onCancel={() => setStartListActive(false)} onSave={onSaveNewList} />
-                )}
-              </View>
-            )}
-          </View>
-        ))}
+        {renderLists}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const getStyles = (Colors: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   boardContainer: {
     padding: 16,
-    paddingRight: 64, // extra breathing room at end
+    paddingRight: 64, 
     gap: 16,
-    alignItems: 'flex-start', // keeps columns aligned to top
+    alignItems: 'flex-start',
   },
   columnWrapper: {
     width: Platform.OS === 'web' ? 320 : 300,

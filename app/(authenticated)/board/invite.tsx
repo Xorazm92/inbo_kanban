@@ -1,7 +1,7 @@
 import { useSupabase } from '@/context/SupabaseContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { View, Text, FlatList, TextInput, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, FlatList, TextInput, Pressable, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { User } from '@/types/enums';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -14,6 +14,7 @@ const Page = () => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [userList, setUserList] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
   const headerHeight = useHeaderHeight();
   const Colors = useThemeColors();
   const styles = getStyles(Colors);
@@ -24,13 +25,23 @@ const Page = () => {
       setUserList([]);
       return;
     }
-    const data = await findUsers!(text);
-    setUserList(data || []);
+    setLoading(true);
+    try {
+      const data = await findUsers!(text);
+      setUserList(data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onAddUser = async (user: User) => {
-    await addUserToBoard!(id!, user.id);
-    await router.dismiss();
+    const { error } = await addUserToBoard!(id!, user.id);
+    if (error) {
+       Alert.alert('Xatolik', 'Foydalanuvchini qo\'shib bo\'lmadi: ' + error.message);
+    } else {
+       Alert.alert('Muvaffaqiyatli', `${user.first_name || user.email} muvaffaqiyatli qo'shildi!`);
+       router.dismiss();
+    }
   };
 
   return (
@@ -83,11 +94,15 @@ const Page = () => {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {search.length > 1
-                ? 'Foydalanuvchi topilmadi'
-                : 'Taklif qilish uchun email yoki ism kiriting'}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color={Colors.primary} size="small" />
+            ) : (
+              <Text style={styles.emptyText}>
+                {search.length > 1
+                  ? 'Foydalanuvchi topilmadi'
+                  : 'Taklif qilish uchun email yoki ism kiriting'}
+              </Text>
+            )}
           </View>
         }
       />

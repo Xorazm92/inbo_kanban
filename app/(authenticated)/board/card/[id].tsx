@@ -12,6 +12,8 @@ import {
   StyleSheet,
   FlatList,
   ScrollView,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import {
@@ -22,6 +24,7 @@ import {
 import UserListItem from '@/components/UserListItem';
 import { client } from '@/utils/supabaseClient';
 import { useAuth } from '@/context/ClerkContext';
+import DatePicker from '@/components/DatePicker';
 
 const Page = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,8 +34,10 @@ const Page = () => {
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ['60%'], []);
+  const listBottomSheetRef = useRef<BottomSheetModal>(null);
+  const listSnapPoints = useMemo(() => ['40%', '60%'], []);
 
-  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard } = useSupabase();
+  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard, getBoardLists, moveCardToList } = useSupabase();
 
   const router = useRouter();
   const [card, setCard] = useState<Task>();
@@ -44,9 +49,14 @@ const Page = () => {
   const [newComment, setNewComment] = useState('');
   const [newChecklist, setNewChecklist] = useState('');
   const [isAddingChecklist, setIsAddingChecklist] = useState(false);
+  const [allLists, setAllLists] = useState<any[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+    setChecklists([]);
+    setComments([]);
+    setImagePath('');
     loadInfo();
     loadFeatures();
   }, [id]);
@@ -54,11 +64,11 @@ const Page = () => {
   const loadFeatures = async () => {
     // Load Checklists
     const clRes = await client.from('checklists').select('*, checklist_items(*)').eq('card_id', id);
-    if (clRes.data) setChecklists(clRes.data);
+    setChecklists(clRes.data || []);
 
     // Load Comments
     const cmRes = await client.from('comments').select('*, users(*)').eq('card_id', id).order('created_at', { ascending: false });
-    if (cmRes.data) setComments(cmRes.data);
+    setComments(cmRes.data || []);
   };
 
   const onAddComment = async () => {
@@ -95,15 +105,22 @@ const Page = () => {
 
     const member = await getBoardMember!(data.board_id);
     setMember(member);
+
+    const lists = await getBoardLists!(data.board_id);
+    setAllLists(lists || []);
   };
 
   const saveAndClose = () => {
-    updateCard!(card!);
+    if (card) {
+      updateCard!(card);
+    }
     router.back();
   };
 
   const onArchiveCard = () => {
-    updateCard!({ ...card!, done: true });
+    if (card) {
+      updateCard!({ ...card, done: true });
+    }
     router.back();
   };
 
@@ -112,6 +129,22 @@ const Page = () => {
 
     setCard(data);
     bottomSheetModalRef.current?.close();
+  };
+
+  const onMoveToList = async (listId: string) => {
+    const { data, error } = await moveCardToList!(card!.id, listId);
+    if (!error) {
+      setCard({ ...card!, list_id: listId });
+      listBottomSheetRef.current?.close();
+      Alert.alert('Muvaffaqiyatli', 'Karta muvaffaqiyatli ko\'chirildi!');
+    }
+  };
+  
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate && card) {
+      setCard({ ...card, due_date: selectedDate.toISOString() });
+    }
   };
 
   const renderBackdrop = useCallback(
@@ -146,7 +179,7 @@ const Page = () => {
               {!card.image_url ? (
                 <TextInput
                   style={styles.titleInput}
-                  value={card.title}
+                  value={card.title || ''}
                   multiline
                   placeholderTextColor={Colors.grey}
                   onChangeText={(text: string) => setCard({ ...card, title: text })}
@@ -157,7 +190,7 @@ const Page = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Tavsif</Text>
               <TextInput
-                style={[styles.input, { minHeight: 120, textAlignVertical: 'top' }]}
+                style={[styles.input, { minHeight: 120, verticalAlign: 'top' }]}
                 value={card.description || ''}
                 multiline
                 placeholder="Tavsif va eslatmalar qo'shing..."
@@ -209,6 +242,68 @@ const Page = () => {
                   <Text style={styles.archiveBtnText}>Arxivlash</Text>
                 </Pressable>
               </View>
+            </View>
+
+            <View style={styles.rowSection}>
+              <View style={{ flex: 1, gap: 8 }}>
+                <Text style={styles.label}>Muddat (Deadline)</Text>
+                <Pressable 
+                  style={styles.memberContainer} 
+                  onPress={() => setShowDatePicker(true)}
+                  role="button"
+                >
+                  <View style={[styles.memberIconBox, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
+                    <Ionicons name="calendar-outline" size={18} color="#FF6B6B" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={card.due_date ? styles.memberLabel : styles.memberLabelEmpty}>
+                      {card.due_date ? new Date(card.due_date).toLocaleDateString() : 'Belgilanmagan'}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.grey} />
+                </Pressable>
+                {showDatePicker && (
+                  <DatePicker
+                    value={card.due_date ? new Date(card.due_date) : new Date()}
+                    onChange={onDateChange}
+                  />
+                )}
+              </View>
+
+              <View style={{ flex: 1, gap: 8 }}>
+                <Text style={styles.label}>Vaqt (Soat)</Text>
+                <View style={styles.memberContainer}>
+                  <View style={[styles.memberIconBox, { backgroundColor: 'rgba(78, 205, 196, 0.15)' }]}>
+                    <Ionicons name="time-outline" size={18} color="#4ECDC4" />
+                  </View>
+                  <TextInput
+                    style={[styles.memberLabel, { flex: 1 }]}
+                    placeholder="Soat..."
+                    keyboardType="numeric"
+                    value={card.estimated_hours?.toString() || ''}
+                    onChangeText={(text) => setCard({ ...card, estimated_hours: text ? parseInt(text) : null })}
+                    placeholderTextColor={Colors.grey}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Ro'yxat (Column)</Text>
+              <Pressable
+                style={styles.memberContainer}
+                onPress={() => listBottomSheetRef.current?.present()}
+                role="button">
+                <View style={[styles.memberIconBox, { backgroundColor: 'rgba(0, 210, 255, 0.15)' }]}>
+                  <Ionicons name="layers-outline" size={18} color={Colors.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.memberLabel}>
+                    {allLists.find((l) => l.id === card.list_id)?.title || 'Ro\'yxatni tanlang'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.grey} />
+              </Pressable>
             </View>
 
             {/* Sub-tasks / Checklists */}
@@ -335,9 +430,51 @@ const Page = () => {
             <View style={styles.sheetContent}>
               <FlatList
                 data={member}
-                keyExtractor={(item) => `${item.id}`}
-                renderItem={(item) => <UserListItem onPress={onAssignUser} element={item} />}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
+                renderItem={({ item }) => <UserListItem onPress={onAssignUser} user={item} />}
                 contentContainerStyle={{ gap: 8, paddingBottom: 20 }}
+              />
+            </View>
+          </View>
+        </BottomSheetModal>
+
+        <BottomSheetModal
+          ref={listBottomSheetRef}
+          index={0}
+          snapPoints={listSnapPoints}
+          handleStyle={{ backgroundColor: Colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}
+          handleIndicatorStyle={{ backgroundColor: Colors.glassBorderStrong, width: 40 }}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={{ backgroundColor: Colors.background }}
+          enableOverDrag={false}
+          enablePanDownToClose>
+          <View style={styles.bottomContainer}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Ro'yxatni tanlang</Text>
+              <Pressable onPress={() => listBottomSheetRef.current?.close()} role="button" style={styles.sheetClose}>
+                <Ionicons name="close" size={20} color={Colors.fontSecondary} />
+              </Pressable>
+            </View>
+            <View style={styles.sheetContent}>
+              <FlatList
+                data={allLists}
+                keyExtractor={(item) => `${item.id}`}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={styles.listItemSelect}
+                    onPress={() => onMoveToList(item.id)}
+                    role="button">
+                    <Ionicons 
+                      name={item.id === card?.list_id ? "radio-button-on" : "radio-button-off"} 
+                      size={20} 
+                      color={item.id === card?.list_id ? Colors.primary : Colors.grey} 
+                    />
+                    <Text style={[styles.listItemText, item.id === card?.list_id && { color: Colors.primary, fontWeight: '700' }]}>
+                      {item.title}
+                    </Text>
+                  </Pressable>
+                )}
+                contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
               />
             </View>
           </View>
@@ -597,6 +734,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginTop: 6,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
+  },
+  listItemSelect: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  listItemText: {
+    fontSize: 16,
+    color: Colors.fontLight,
   },
 });
 const BiriktirmaContainer = { gap: 8 };

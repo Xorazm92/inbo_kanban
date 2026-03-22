@@ -4,24 +4,24 @@ import { Pressable, Image, Text, View, ListRenderItemInfo, StyleSheet } from 're
 import { Ionicons } from '@expo/vector-icons';
 
 interface UserListItemProps {
-  element: ListRenderItemInfo<User>;
+  user: User;
   onPress: (user: User) => void;
 }
 
-const UserListItem = ({ element: { item }, onPress }: UserListItemProps) => {
+const UserListItem = ({ user, onPress }: UserListItemProps) => {
   const Colors = useThemeColors();
   const styles = getStyles(Colors);
   return (
     <Pressable
       style={styles.container}
-      onPress={() => onPress(item)}
+      onPress={() => onPress(user)}
       role="button">
       <View style={styles.avatarRing}>
-        <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
+        <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.name}>{item.first_name}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+        <Text style={styles.name}>{user.first_name}</Text>
+        <Text style={styles.email}>{user.email}</Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={Colors.grey} />
     </Pressable>
