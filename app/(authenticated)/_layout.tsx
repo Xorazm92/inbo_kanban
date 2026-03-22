@@ -5,9 +5,7 @@ import { Stack, useRouter } from 'expo-router';
 import { Pressable, Platform } from 'react-native';
 
 const Layout = () => {
-  if (Platform.OS !== 'web') {
-    usePush();
-  }
+  usePush();
   const router = useRouter();
   const Colors = useThemeColors();
 

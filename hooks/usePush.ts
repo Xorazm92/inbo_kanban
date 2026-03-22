@@ -21,13 +21,15 @@ export const usePush = () => {
   const router = useRouter();
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token) {
           setUserPushToken!(token);
         }
       })
-      .catch((error: any) => console.log('error', error));
+      .catch((error: any) => console.log('Push registration error:', error));
 
     // Recieved notification
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
@@ -49,8 +51,7 @@ export const usePush = () => {
   }, []);
 
   function handleRegistrationError(errorMessage: string) {
-    alert(errorMessage);
-    throw new Error(errorMessage);
+    console.warn('[Push]', errorMessage);
   }
 
   async function registerForPushNotificationsAsync() {

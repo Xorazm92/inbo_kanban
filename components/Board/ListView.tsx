@@ -171,6 +171,9 @@ const ListView = ({ taskList, onDelete, listIndex = 0 }: ListViewProps) => {
         >
           <View style={[styles.statusDot, { backgroundColor: status.color }]} />
           <Text style={styles.columnTitle}>{listName}</Text>
+          <View style={styles.cardCountBadge}>
+            <Text style={styles.cardCountText}>{tasks.length}</Text>
+          </View>
           <Text style={styles.columnEmoji}>{status.emoji}</Text>
         </Pressable>
 
@@ -309,7 +312,22 @@ const getStyles = (Colors: any) => StyleSheet.create({
   columnTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.fontLight, 
+    color: Colors.fontLight,
+    flex: 1,
+  },
+  cardCountBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.surfaceHover,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  cardCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.fontSecondary,
   },
   columnEmoji: {
     fontSize: 16,

@@ -3,7 +3,7 @@ import { useSupabase } from '@/context/SupabaseContext';
 import { Task } from '@/types/enums';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, Pressable, Image, Text, View, Platform } from 'react-native';
 import { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 
@@ -38,13 +38,14 @@ const ListItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Task>) =>
   const [imagePath, setImagePath] = useState<string>('');
   const Colors = useThemeColors();
   const styles = getStyles(Colors);
-  if (item.image_url) {
-    getFileFromPath!(item.image_url).then((path) => {
-      if (path && path !== imagePath) {
-        setImagePath(path);
-      }
-    });
-  }
+
+  useEffect(() => {
+    if (item.image_url) {
+      getFileFromPath!(item.image_url).then((path) => {
+        if (path) setImagePath(path);
+      });
+    }
+  }, [item.image_url]);
 
   const openLink = () => {
     router.push(`/board/card/${item.id}`);

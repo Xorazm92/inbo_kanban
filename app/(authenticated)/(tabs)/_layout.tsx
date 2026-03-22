@@ -16,8 +16,8 @@ const Layout = () => {
           borderTopColor: Colors.glassBorder,
           borderTopWidth: 1,
           elevation: 0,
-          paddingBottom: 4,
-          height: 56,
+          paddingBottom: Platform.OS === 'web' ? 34 : 4,
+          height: Platform.OS === 'web' ? 84 : 56,
         },
         headerStyle: {
           backgroundColor: Colors.background,

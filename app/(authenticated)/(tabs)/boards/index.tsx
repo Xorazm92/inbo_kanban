@@ -24,8 +24,10 @@ const Page = () => {
   );
 
   const loadBoards = async () => {
+    setRefreshing(true);
     const data = await getBoards!();
     setBoards(data);
+    setRefreshing(false);
   };
 
   const handleGenerateMockData = async () => {
@@ -176,17 +178,12 @@ const Page = () => {
               </Text>
             </Pressable>
 
-            <Pressable 
-              style={styles.newBoardButton}
-              onPress={() => {}}
-            >
-              <Link href="/boards/new-board" asChild>
-                <Pressable style={styles.newBoardButton} role="button">
-                  <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
-                  <Text style={styles.newBoardButtonText}>Yangi doska yaratish</Text>
-                </Pressable>
-              </Link>
-            </Pressable>
+            <Link href="/boards/new-board" asChild>
+              <Pressable style={styles.newBoardButton} role="button">
+                <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
+                <Text style={styles.newBoardButtonText}>Yangi doska yaratish</Text>
+              </Pressable>
+            </Link>
 
             {/* Feature highlights */}
             <View style={styles.featuresContainer}>

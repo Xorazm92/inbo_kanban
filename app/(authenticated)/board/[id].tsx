@@ -3,7 +3,7 @@ import { useSupabase } from '@/context/SupabaseContext';
 import { Board } from '@/types/enums';
 import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import BoardArea from '@/components/Board/BoardArea';
@@ -11,8 +11,9 @@ import { useHeaderHeight } from '@react-navigation/elements';
 
 const Page = () => {
   const { id, bg } = useLocalSearchParams<{ id: string; bg?: string }>();
-  const { getBoardInfo } = useSupabase();
+  const { getBoardInfo, getBoardMember } = useSupabase();
   const [board, setBoard] = useState<Board>();
+  const [members, setMembers] = useState<any[]>([]);
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const headerHeight = useHeaderHeight();
@@ -28,6 +29,8 @@ const Page = () => {
     if (!id) return;
     const data = await getBoardInfo!(id);
     setBoard(data);
+    const memberData = await getBoardMember!(id);
+    setMembers(memberData || []);
   };
 
   const CustomHeader = () => (
@@ -49,16 +52,24 @@ const Page = () => {
           </Text>
         </View>
 
-        {/* Member Avatars (Mock for now) */}
+        {/* Member Avatars */}
         <View style={styles.avatarGroup}>
-          {[1, 2, 3].map((i, index) => (
-            <View key={i} style={[styles.avatarCircle, { left: index * -8, backgroundColor: Colors.surfaceHover }]}>
-              <Text style={styles.avatarText}>U{i}</Text>
+          {members.slice(0, 3).map((member: any, index: number) => (
+            <View key={member?.id || index} style={[styles.avatarCircle, { left: index * -8 }]}>
+              {member?.avatar_url ? (
+                <Image source={{ uri: member.avatar_url }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {(member?.first_name || member?.email || 'U').charAt(0).toUpperCase()}
+                </Text>
+              )}
             </View>
           ))}
-          <Pressable style={[styles.avatarCircle, { left: 3 * -8, backgroundColor: Colors.primary }]}>
-            <Ionicons name="add" size={14} color="#FFF" />
-          </Pressable>
+          <Link href={`/board/invite?id=${id}`} asChild>
+            <Pressable role="button" style={[styles.avatarCircle, { left: Math.min(members.length, 3) * -8, backgroundColor: Colors.primary }]}>
+              <Ionicons name="add" size={14} color="#FFF" />
+            </Pressable>
+          </Link>
         </View>
 
         <View style={styles.headerActions}>
@@ -144,9 +155,16 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    backgroundColor: Colors.surfaceHover,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   avatarText: {
-    color: Colors.fontSecondary,
+    color: Colors.fontLight,
     fontSize: 11,
     fontWeight: '700',
   },
