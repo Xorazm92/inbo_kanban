@@ -12,6 +12,7 @@ export const CARDS_TABLE = 'cards';
 export const USERS_TABLE = 'users';
 export const FILES_BUCKET = 'files';
 export const NOTIFICATIONS_TABLE = 'notifications';
+export const DAILY_LOGS_TABLE = 'daily_logs';
 
 type ProviderProps = {
   userId: string | null;
@@ -55,6 +56,12 @@ type ProviderProps = {
   getMyCards: () => Promise<any>;
   getNotifications: () => Promise<any>;
   generateMockData: () => Promise<boolean>;
+  getDailyLogs: (date: string, targetUserId?: string) => Promise<any>;
+  saveDailyLog: (content: string, date: string) => Promise<any>;
+  getUserRole: () => Promise<any>;
+  getMyTeam: () => Promise<any>;
+  updateUserRole: (role: string) => Promise<any>;
+  updateUserManager: (managerId: string | null) => Promise<any>;
 };
 
 const SupabaseContext = createContext<Partial<ProviderProps>>({});
@@ -105,12 +112,11 @@ export const SupabaseProvider = ({ children }: any) => {
   };
 
   const createBoard = async (title: string, background: string) => {
-    // Diagnostics for tracking 403 errors
     if (!userId) {
        console.warn('[SupabaseContext] createBoard called but userId is null!');
     }
     
-    const { data, error } = await client
+    const { data } = await client
       .from(BOARDS_TABLE)
       .insert({ title, creator: userId, background })
       .select('*')
@@ -131,9 +137,7 @@ export const SupabaseProvider = ({ children }: any) => {
       .from(USER_BOARDS_TABLE)
       .select(`boards ( title, id, background )`)
       .eq('user_id', userId);
-    const boards = data?.map((b: any) => b.boards);
-
-    return boards || [];
+    return data?.map((b: any) => b.boards) || [];
   };
 
   const getBoardInfo = async (boardId: string) => {
@@ -160,7 +164,6 @@ export const SupabaseProvider = ({ children }: any) => {
     return await client.from(BOARDS_TABLE).delete().match({ id });
   };
 
-  // CRUD Lists
   const getBoardLists = async (boardId: string) => {
     const lists = await client
       .from(LISTS_TABLE)
@@ -194,7 +197,6 @@ export const SupabaseProvider = ({ children }: any) => {
     return await client.from(LISTS_TABLE).delete().match({ id: id });
   };
 
-  // CRUD Cards
   const addListCard = async (
     listId: string,
     boardId: string,
@@ -204,7 +206,14 @@ export const SupabaseProvider = ({ children }: any) => {
   ) => {
     return await client
       .from(CARDS_TABLE)
-      .insert({ board_id: boardId, list_id: listId, title, position, image_url })
+      .insert({ 
+        board_id: boardId, 
+        list_id: listId, 
+        title, 
+        position, 
+        image_url,
+        user_id: userId // Set creator
+      })
       .select('*')
       .single();
   };
@@ -269,6 +278,7 @@ export const SupabaseProvider = ({ children }: any) => {
       .or(`email.ilike.%${search}%,first_name.ilike.%${search}%`);
     return data;
   };
+
   const removeUserFromBoard = async (boardId: string, userId: string) => {
     return await client
       .from(USER_BOARDS_TABLE)
@@ -290,16 +300,18 @@ export const SupabaseProvider = ({ children }: any) => {
       .select('users(*)')
       .eq('board_id', boardId);
 
-    const members = data?.map((b: any) => b.users);
-    return members;
+    const members = data?.map((b: any) => b.users) || [];
+    // Filter for unique members by ID
+    const uniqueMembers = members.filter((member, index, self) =>
+      index === self.findIndex((m) => m.id === member.id)
+    );
+    return uniqueMembers;
   };
 
   const getRealtimeCardSubscription = (
     id: string,
     handleRealtimeChanges: (update: RealtimePostgresChangesPayload<any>) => void
   ) => {
-    console.log('Creating a realtime connection...');
-
     return client
       .channel(`card-changes-${id}`)
       .on(
@@ -344,7 +356,7 @@ export const SupabaseProvider = ({ children }: any) => {
 
     return data;
   };
-  
+
   const getMyCards = async () => {
     const { data } = await client
       .from(CARDS_TABLE)
@@ -390,6 +402,61 @@ export const SupabaseProvider = ({ children }: any) => {
     }
   };
 
+  const getDailyLogs = async (date: string, targetUserId?: string) => {
+    const query = client
+      .from(DAILY_LOGS_TABLE)
+      .select('*, users(*)')
+      .eq('log_date', date);
+    
+    if (targetUserId) {
+      query.eq('user_id', targetUserId);
+    } else {
+      query.eq('user_id', userId);
+    }
+
+    const { data } = await query;
+    return data || [];
+  };
+
+  const saveDailyLog = async (content: string, date: string) => {
+    return await client.from(DAILY_LOGS_TABLE).upsert({
+      user_id: userId,
+      log_date: date,
+      content,
+    });
+  };
+
+  const getUserRole = async () => {
+    const { data } = await client
+      .from(USERS_TABLE)
+      .select('role, manager_id')
+      .eq('id', userId)
+      .single();
+    return data;
+  };
+
+  const getMyTeam = async () => {
+    const { data } = await client
+      .from(USERS_TABLE)
+      .select('*')
+      .eq('manager_id', userId);
+    return data || [];
+  };
+
+  const updateUserRole = async (role: string) => {
+    return await client
+      .from(USERS_TABLE)
+      .update({ role })
+      .eq('id', userId);
+  };
+
+  const updateUserManager = async (managerId: string | null) => {
+    return await client
+      .from(USERS_TABLE)
+      .update({ manager_id: managerId })
+      .eq('id', userId);
+  };
+
   const value = {
     userId,
     createBoard,
@@ -419,6 +486,12 @@ export const SupabaseProvider = ({ children }: any) => {
     getMyCards,
     getNotifications,
     generateMockData,
+    getDailyLogs,
+    saveDailyLog,
+    getUserRole,
+    getMyTeam,
+    updateUserRole,
+    updateUserManager,
   };
 
   return <SupabaseContext.Provider value={value}>{children}</SupabaseContext.Provider>;

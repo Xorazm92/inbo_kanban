@@ -11,13 +11,23 @@ interface UserListItemProps {
 const UserListItem = ({ user, onPress }: UserListItemProps) => {
   const Colors = useThemeColors();
   const styles = getStyles(Colors);
+
+  if (!user) return null;
   return (
     <Pressable
       style={styles.container}
       onPress={() => onPress(user)}
       role="button">
       <View style={styles.avatarRing}>
-        <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+        {user.avatar_url ? (
+          <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: Colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }]}>
+            <Text style={{ color: Colors.fontLight, fontSize: 12, fontWeight: '700' }}>
+              {(user.first_name || user.email || 'U').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.name}>{user.first_name}</Text>

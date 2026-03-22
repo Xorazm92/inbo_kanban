@@ -113,7 +113,7 @@ const Page = () => {
           renderItem={(info) => (
             <UserListItem 
               onPress={() => onRemoveMember(info.item.id)} 
-              element={info} 
+              user={info.item} 
             />
           )}
           contentContainerStyle={{ gap: 8 }}

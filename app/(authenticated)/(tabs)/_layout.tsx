@@ -57,10 +57,10 @@ const Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="daily-log"
         options={{
-          title: 'Qidiruv',
-          tabBarIcon: ({ size, color }) => <Ionicons name="search" size={size} color={color} />,
+          title: 'Kundalik',
+          tabBarIcon: ({ size, color }) => <Ionicons name="journal-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen

@@ -89,7 +89,7 @@ const Page = () => {
       <FlatList
         data={userList}
         keyExtractor={(item) => `${item.id}`}
-        renderItem={(item) => <UserListItem onPress={onAddUser} element={item} />}
+        renderItem={({ item }) => <UserListItem onPress={onAddUser} user={item} />}
         style={{ marginTop: Platform.OS !== 'web' ? 60 + headerHeight : 0 }}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={

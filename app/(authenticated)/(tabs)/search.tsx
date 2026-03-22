@@ -62,7 +62,7 @@ const Page = () => {
       <FlatList
         data={userList}
         keyExtractor={(item) => item.id}
-        renderItem={(item) => <UserListItem element={item} onPress={() => {}} />}
+        renderItem={({ item }) => <UserListItem user={item} onPress={() => {}} />}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

@@ -37,12 +37,13 @@ const Page = () => {
   const listBottomSheetRef = useRef<BottomSheetModal>(null);
   const listSnapPoints = useMemo(() => ['40%', '60%'], []);
 
-  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard, getBoardLists, moveCardToList } = useSupabase();
+  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard, getBoardLists, moveCardToList, getUserRole } = useSupabase();
 
   const router = useRouter();
   const [card, setCard] = useState<Task>();
   const [member, setMember] = useState<User[]>();
   const [imagePath, setImagePath] = useState<string>('');
+  const [currentUserRole, setCurrentUserRole] = useState<any>(null);
 
   const [checklists, setChecklists] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
@@ -59,7 +60,28 @@ const Page = () => {
     setImagePath('');
     loadInfo();
     loadFeatures();
+    
+    // Load current user's role for permissions
+    getUserRole!().then(setCurrentUserRole);
   }, [id]);
+
+  const canEdit = useMemo(() => {
+    if (!card || !userId || !currentUserRole) return false;
+    
+    // Admin can edit everything
+    if (currentUserRole.role === 'admin') return true;
+    
+    // Creator can edit
+    if (card.user_id === userId) return true;
+    
+    // Assignee can edit
+    if (card.assigned_to === userId) return true;
+    
+    // Lead can edit if it's their team member's card (assigned to them)
+    if (currentUserRole.role === 'lead' && card.users?.manager_id === userId) return true;
+    
+    return false;
+  }, [card, userId, currentUserRole]);
 
   const loadFeatures = async () => {
     // Load Checklists
@@ -111,7 +133,7 @@ const Page = () => {
   };
 
   const saveAndClose = () => {
-    if (card) {
+    if (card && canEdit) {
       updateCard!(card);
     }
     router.back();
@@ -183,6 +205,7 @@ const Page = () => {
                   multiline
                   placeholderTextColor={Colors.grey}
                   onChangeText={(text: string) => setCard({ ...card, title: text })}
+                  editable={canEdit}
                 />
               ) : null}
             </View>
@@ -196,6 +219,7 @@ const Page = () => {
                 placeholder="Tavsif va eslatmalar qo'shing..."
                 placeholderTextColor={Colors.grey}
                 onChangeText={(text: string) => setCard({ ...card, description: text })}
+                editable={canEdit}
               />
             </View>
 
@@ -212,12 +236,19 @@ const Page = () => {
               </View>
             ) : null}
 
+            {!canEdit && (
+              <View style={styles.readOnlyNotice}>
+                <Ionicons name="eye-outline" size={16} color={Colors.warning} />
+                <Text style={styles.readOnlyText}>Ko'rish tartibi (Tahrirlash taqiqlangan)</Text>
+              </View>
+            )}
+
             <View style={styles.rowSection}>
               <View style={styles.memberOuter}>
                 <Text style={styles.label}>Mas'ul xodim</Text>
                 <Pressable 
-                  style={styles.memberContainer}
-                  onPress={() => bottomSheetModalRef.current?.present()}
+                  style={[styles.memberContainer, !canEdit && { opacity: 0.7 }]}
+                  onPress={() => canEdit && bottomSheetModalRef.current?.present()}
                   role="button">
                   <View style={styles.memberIconBox}>
                     <Ionicons name="person" size={18} color={Colors.primary} />
@@ -231,13 +262,16 @@ const Page = () => {
                       </Text>
                     )}
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color={Colors.grey} />
+                  {canEdit && <Ionicons name="chevron-forward" size={16} color={Colors.grey} />}
                 </Pressable>
               </View>
 
               <View style={styles.archiveOuter}>
                 <Text style={styles.label}>Harakatlar</Text>
-                <Pressable onPress={onArchiveCard} style={styles.archiveBtn} role="button">
+                <Pressable 
+                  onPress={() => canEdit && onArchiveCard()} 
+                  style={[styles.archiveBtn, !canEdit && { opacity: 0.5 }]} 
+                  role="button">
                   <Ionicons name="archive-outline" size={18} color={Colors.warning} />
                   <Text style={styles.archiveBtnText}>Arxivlash</Text>
                 </Pressable>
@@ -248,8 +282,8 @@ const Page = () => {
               <View style={{ flex: 1, gap: 8 }}>
                 <Text style={styles.label}>Muddat (Deadline)</Text>
                 <Pressable 
-                  style={styles.memberContainer} 
-                  onPress={() => setShowDatePicker(true)}
+                  style={[styles.memberContainer, !canEdit && { opacity: 0.7 }]} 
+                  onPress={() => canEdit && setShowDatePicker(true)}
                   role="button"
                 >
                   <View style={[styles.memberIconBox, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
@@ -260,7 +294,7 @@ const Page = () => {
                       {card.due_date ? new Date(card.due_date).toLocaleDateString() : 'Belgilanmagan'}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color={Colors.grey} />
+                  {canEdit && <Ionicons name="chevron-forward" size={16} color={Colors.grey} />}
                 </Pressable>
                 {showDatePicker && (
                   <DatePicker
@@ -328,9 +362,13 @@ const Page = () => {
                       <Pressable 
                         key={item.id} 
                         style={styles.checklistItem}
-                        onPress={() => onToggleChecklistItem(item.id, !item.done)}
+                        onPress={() => canEdit && onToggleChecklistItem(item.id, !item.done)}
                       >
-                        <Ionicons name={item.done ? "checkbox" : "square-outline"} size={20} color={item.done ? Colors.primary : Colors.fontSecondary} />
+                        <Ionicons 
+                          name={item.done ? "checkbox" : "square-outline"} 
+                          size={20} 
+                          color={item.done ? Colors.primary : Colors.fontSecondary} 
+                        />
                         <Text style={[styles.checklistText, item.done && styles.checklistDone]}>{item.title}</Text>
                       </Pressable>
                     ))}
@@ -725,6 +763,22 @@ const getStyles = (Colors: any) => StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
+  },
+  readOnlyNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 171, 0, 0.1)',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 171, 0, 0.2)',
+    marginBottom: 8,
+  },
+  readOnlyText: {
+    color: '#FFAB00',
+    fontSize: 13,
+    fontWeight: '600',
   },
   commentBubble: {
     backgroundColor: Colors.surface,

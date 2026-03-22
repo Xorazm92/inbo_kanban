@@ -10,6 +10,12 @@ export enum AuthStrategy {
   Apple = 'oauth_apple',
 }
 
+export enum UserRole {
+  Admin = 'admin',   // Boshliq
+  Lead = 'lead',     // Bo'lim boshlig'i
+  Member = 'member', // Ishchi
+}
+
 export interface Board {
   id: string;
   creator: string;
@@ -33,6 +39,7 @@ export interface TaskListFake {
 
 export interface Task {
   id: string;
+  user_id?: string; // Creator ID
   list_id: string;
   board_id: string;
   position: number;
@@ -53,6 +60,17 @@ export interface User {
   first_name: string;
   id: string;
   username: null;
+  role?: UserRole;
+  manager_id?: string | null;
+}
+
+export interface DailyLog {
+  id: string;
+  user_id: string;
+  content: string;
+  log_date: string;
+  created_at: string;
+  users?: User;
 }
 
 export interface Comment {
