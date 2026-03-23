@@ -35,6 +35,11 @@ const Page = () => {
   };
 
   const onDelete = async () => {
+    if (board?.creator !== userId) {
+      Alert.alert("Ruxsat yo'q", "Faqat doska egasi ushbu doskani o'chira oladi.");
+      return;
+    }
+
     Alert.alert(
       "Doskani yopish",
       "Haqiqatan ham ushbu doskani o'chirib tashlamoqchimisiz? Bu amalni qaytarib bo'lmaydi.",
@@ -44,8 +49,12 @@ const Page = () => {
           text: "O'chirish", 
           style: "destructive",
           onPress: async () => {
-            await deleteBoard!(`${id}`);
-            router.dismissAll();
+            const { error } = await deleteBoard!(`${id}`);
+            if (error) {
+              Alert.alert("Xatolik", "Doskani o'chirishda xatolik yuz berdi: " + error.message);
+            } else {
+              router.dismissAll();
+            }
           }
         }
       ]
@@ -128,10 +137,12 @@ const Page = () => {
         </Link>
       </View>
 
-      <Pressable onPress={onDelete} style={styles.deleteBtn} role="button">
-        <Ionicons name="trash-outline" size={18} color={Colors.danger} />
-        <Text style={styles.deleteBtnText}>Doskani yopish</Text>
-      </Pressable>
+      {board?.creator === userId && (
+        <Pressable onPress={onDelete} style={styles.deleteBtn} role="button">
+          <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+          <Text style={styles.deleteBtnText}>Doskani yopish</Text>
+        </Pressable>
+      )}
     </View>
   );
 };

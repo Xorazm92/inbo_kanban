@@ -40,11 +40,15 @@ const Page = () => {
     setMembers(memberData || []);
 
     // Load role and team
-    const userRole = await getUserRole!();
-    setRole(userRole);
-    if (userRole?.role === 'lead' || userRole?.role === 'admin') {
-      const myTeam = await getMyTeam!();
-      setTeam(myTeam);
+    try {
+      const userRole = await getUserRole!();
+      setRole(userRole);
+      if (userRole?.role === 'lead' || userRole?.role === 'admin') {
+        const myTeam = await getMyTeam!();
+        setTeam(myTeam);
+      }
+    } catch (err) {
+      console.warn('User Role/Team Load Error:', err);
     }
   };
 
@@ -70,7 +74,7 @@ const Page = () => {
         {/* Member Avatars */}
         <View style={styles.avatarGroup}>
           {members.slice(0, 3).map((member: any, index: number) => (
-            <View key={`${member?.id || 'm'}-${index}`} style={[styles.avatarCircle, { left: index * -8 }]}>
+            <View key={`header-member-${member?.id || index}`} style={[styles.avatarCircle, { left: index * -8 }]}>
               {member?.avatar_url ? (
                 <Image source={{ uri: member.avatar_url }} style={styles.avatarImage} />
               ) : (
@@ -88,13 +92,11 @@ const Page = () => {
         </View>
 
         <View style={styles.headerActions}>
-          {(role?.role === 'lead' || role?.role === 'admin') && (
-            <Pressable 
-              onPress={() => setShowTeamModal(true)}
-              style={styles.headerIconBtn}>
-              <Ionicons name="people-outline" size={20} color={Colors.fontLight} />
-            </Pressable>
-          )}
+          <Pressable 
+            onPress={() => setShowTeamModal(true)}
+            style={styles.headerIconBtn}>
+            <Ionicons name="people-outline" size={20} color={Colors.fontLight} />
+          </Pressable>
           
           <Pressable
             onPress={() => setShowOnlyMine(!showOnlyMine)}
@@ -140,9 +142,12 @@ const Page = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Jamoa holati</Text>
-              <Pressable onPress={() => setShowTeamModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.fontLight} />
+              <View>
+                <Text style={styles.modalTitle}>Jamoa a'zolari</Text>
+                <Text style={styles.modalSubtitle}>{team.length + members.length} nafar faol ishtirokchi</Text>
+              </View>
+              <Pressable onPress={() => setShowTeamModal(false)} style={styles.closeModalBtn}>
+                <Ionicons name="close" size={20} color={Colors.fontLight} />
               </Pressable>
             </View>
             
@@ -151,7 +156,7 @@ const Page = () => {
                 <Text style={{ color: Colors.grey, textAlign: 'center', marginTop: 40 }}>Sizning jamoangizda hali xodimlar yoʻq</Text>
               ) : (
                 team.map((member, index) => (
-                  <View key={`${member.id}-${index}`} style={styles.teamMemberCard}>
+                  <View key={`team-member-${member.id || index}`} style={styles.teamMemberCard}>
                     <View style={styles.memberInfo}>
                       <Image source={{ uri: member.avatar_url }} style={styles.memberAvatar} />
                       <View>
@@ -285,9 +290,19 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: Colors.fontLight,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: Colors.fontSecondary,
+    marginTop: 2,
+  },
+  closeModalBtn: {
+    padding: 8,
+    backgroundColor: Colors.surfaceHover,
+    borderRadius: 12,
   },
   teamMemberCard: {
     backgroundColor: Colors.surface,

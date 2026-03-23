@@ -37,7 +37,7 @@ const Page = () => {
   const listBottomSheetRef = useRef<BottomSheetModal>(null);
   const listSnapPoints = useMemo(() => ['40%', '60%'], []);
 
-  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard, getBoardLists, moveCardToList, getUserRole } = useSupabase();
+  const { getCardInfo, getBoardMember, getFileFromPath, updateCard, assignCard, getBoardLists, moveCardToList, getUserRole, deleteCard } = useSupabase();
 
   const router = useRouter();
   const [card, setCard] = useState<Task>();
@@ -144,6 +144,26 @@ const Page = () => {
       updateCard!({ ...card, done: true });
     }
     router.back();
+  };
+
+  const onDeleteCard = async () => {
+    if (!card) return;
+    
+    Alert.alert(
+      "Kartani o'chirish",
+      "Haqiqatan ham ushbu kartani o'chirib tashlamoqchimisiz? Bu amalni qaytarib bo'lmaydi.",
+      [
+        { text: "Bekor qilish", style: "cancel" },
+        { 
+          text: "O'chirish", 
+          style: "destructive",
+          onPress: async () => {
+            await deleteCard!(card.id);
+            router.back();
+          }
+        }
+      ]
+    );
   };
 
   const onAssignUser = async (user: User) => {
@@ -446,6 +466,16 @@ const Page = () => {
               </View>
             </View>
 
+            {/* Harakatlar (Harakatlar bo'limidan tashqari alohida butunlay o'chirish) */}
+            <View style={[styles.section, { marginTop: 20 }]}>
+              <Pressable 
+                onPress={() => canEdit && onDeleteCard()} 
+                style={[styles.deleteCardBtn, !canEdit && { opacity: 0.5 }]} 
+                role="button">
+                <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+                <Text style={styles.deleteCardBtnText}>Kartani butunlay o'chirish</Text>
+              </Pressable>
+            </View>
           </ScrollView>
         )}
         <BottomSheetModal
@@ -802,6 +832,22 @@ const getStyles = (Colors: any) => StyleSheet.create({
   listItemText: {
     fontSize: 16,
     color: Colors.fontLight,
+  },
+  deleteCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 82, 82, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 82, 82, 0.15)',
+  },
+  deleteCardBtnText: {
+    color: Colors.danger,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 const BiriktirmaContainer = { gap: 8 };

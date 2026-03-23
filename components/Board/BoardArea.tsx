@@ -44,7 +44,7 @@ const BoardArea = ({ board, showOnlyMine = false }: BoardAreaProps) => {
 
   const renderLists = useMemo(() => {
     return data.map((item, index) => (
-      <View key={item.id ? `list-${item.id}` : `add-list`} style={styles.columnWrapper}>
+      <View key={item.id ? `list-${item.id}-${index}` : `add-list-${index}`} style={styles.columnWrapper}>
         {item.id && (
           <ListView
             taskList={item as TaskList}
