@@ -1,6 +1,6 @@
 import { useSupabase } from '@/context/SupabaseContext';
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Platform, Dimensions } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,29 +71,32 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width, height } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    padding: isSmall ? 12 : 16,
+    gap: 10,
   },
   notificationItem: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    gap: 10,
+    padding: isSmall ? 12 : 16,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
   },
   iconContainer: {
     backgroundColor: Colors.surfaceElevated,
-    padding: 10,
-    borderRadius: 14,
+    padding: isSmall ? 8 : 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
   },
@@ -119,7 +122,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 150,
+    marginTop: Math.min(height * 0.2, 150),
     gap: 16,
   },
   emptyIconBox: {
@@ -138,5 +141,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontSize: 16,
   },
 });
+};
 
 export default Page;

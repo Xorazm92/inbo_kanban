@@ -17,6 +17,9 @@
       "bundleIdentifier": "com.supersimon.inbo",
       "entitlements": {
         "aps-environment": "development"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,7 +28,9 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.supersimon.inbo",
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -52,8 +57,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "d432b8fc-58a1-4258-a0cc-dc0a227d0071"
+        "projectId": "96a98413-7d2b-4b67-bd1c-b293ff161c45"
       }
-    }
+    },
+    "owner": "inbos-organization"
   }
 }

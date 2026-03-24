@@ -14,6 +14,8 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import {
@@ -552,7 +554,10 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width } = Dimensions.get('window');
+  const isSmall = width < 420;
+  return StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -588,8 +593,8 @@ const getStyles = (Colors: any) => StyleSheet.create({
     color: Colors.fontLight,
   },
   rowSection: {
-    flexDirection: 'row',
-    gap: 16,
+    flexDirection: isSmall ? 'column' : 'row',
+    gap: isSmall ? 12 : 16,
   },
   memberOuter: {
     flex: 1,
@@ -626,8 +631,8 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 16,
+    height: isSmall ? 180 : 220,
+    borderRadius: 14,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
@@ -850,6 +855,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontWeight: '700',
   },
 });
+};
 const BiriktirmaContainer = { gap: 8 };
 
 export default Page;

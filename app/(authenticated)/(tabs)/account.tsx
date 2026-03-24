@@ -1,5 +1,5 @@
 import { useAuth, useUser } from '@/context/ClerkContext';
-import { View, Text, StyleSheet, Image, Pressable, ScrollView, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, ScrollView, Modal, TextInput, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { useSupabase } from '@/context/SupabaseContext';
@@ -180,7 +180,10 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -193,15 +196,15 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   avatarRing: {
     padding: 3,
-    borderRadius: 55,
+    borderRadius: isSmall ? 45 : 55,
     borderWidth: 2,
     borderColor: Colors.primary,
     marginBottom: 10,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: isSmall ? 76 : 96,
+    height: isSmall ? 76 : 96,
+    borderRadius: isSmall ? 38 : 48,
     backgroundColor: Colors.surface,
   },
   name: {
@@ -232,13 +235,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   roleItem: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: isSmall ? '40%' : '45%',
     backgroundColor: Colors.surface,
-    padding: 16,
-    borderRadius: 16,
+    padding: isSmall ? 12 : 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
   },
@@ -329,8 +332,8 @@ const getStyles = (Colors: any) => StyleSheet.create({
     backgroundColor: Colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
-    height: '70%',
+    padding: isSmall ? 16 : 20,
+    height: isSmall ? '85%' : '70%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -371,5 +374,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginTop: 20,
   },
 });
+};
 
 export default Page;

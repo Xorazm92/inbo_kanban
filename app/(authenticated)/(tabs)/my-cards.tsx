@@ -1,7 +1,7 @@
 import { useSupabase } from '@/context/SupabaseContext';
 import { Task } from '@/types/enums';
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Platform, Dimensions } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -110,14 +110,17 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width, height } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    padding: isSmall ? 12 : 16,
+    gap: 10,
   },
   cardItem: {
     flexDirection: 'row',
@@ -154,10 +157,11 @@ const getStyles = (Colors: any) => StyleSheet.create({
     color: Colors.fontSecondary,
   },
   cardFooter: {
-    flexDirection: 'row',
+    flexDirection: isSmall ? 'column' : 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: isSmall ? 'flex-start' : 'center',
     marginTop: 4,
+    gap: isSmall ? 4 : 0,
   },
   metaInfo: {
     flexDirection: 'row',
@@ -177,7 +181,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 150,
+    marginTop: Math.min(height * 0.2, 150),
     gap: 16,
   },
   emptyIconBox: {
@@ -196,5 +200,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontSize: 16,
   },
 });
+};
 
 export default Page;

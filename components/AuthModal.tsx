@@ -2,7 +2,7 @@ import { AuthStrategy, ModalType } from '@/types/enums';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { Image, Text, Pressable, StyleSheet, Platform, View, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import { Image, Text, Pressable, StyleSheet, Platform, View, ActivityIndicator, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { useWarmUpBrowser } from '@/hooks/useWarmUpBrowser';
 import { useOAuth, useSignIn, useSignUp } from '@/context/ClerkContext';
 import * as Linking from 'expo-linking';
@@ -242,10 +242,13 @@ const AuthModal = ({ authType }: AuthModalProps) => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
   modalContainer: {
-    padding: 24,
-    gap: 12,
+    padding: isSmall ? 18 : 24,
+    gap: isSmall ? 10 : 12,
     backgroundColor: Colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
@@ -263,7 +266,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    fontSize: 26,
+    fontSize: isSmall ? 22 : 26,
     fontWeight: '800',
     color: Colors.fontLight,
     textAlign: 'center',
@@ -305,12 +308,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   modalBtn: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 12,
     alignItems: 'center',
     borderColor: Colors.glassBorder,
     borderWidth: 1,
-    padding: 14,
-    borderRadius: 16,
+    padding: isSmall ? 12 : 14,
+    borderRadius: 14,
     width: '100%',
     backgroundColor: Colors.surface,
   },
@@ -361,5 +364,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     paddingVertical: 4,
   },
 });
+};
 
 export default AuthModal;

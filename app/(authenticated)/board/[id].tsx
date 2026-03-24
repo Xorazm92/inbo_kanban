@@ -3,7 +3,7 @@ import { useSupabase } from '@/context/SupabaseContext';
 import { Board } from '@/types/enums';
 import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, Image, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Image, Modal, ScrollView, Dimensions, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import BoardArea from '@/components/Board/BoardArea';
@@ -52,77 +52,80 @@ const Page = () => {
     }
   };
 
-  const CustomHeader = () => (
-    <View style={StyleSheet.flatten([styles.headerSolid, { paddingTop: Platform.OS === 'web' ? 16 : top }])}>
-      <View style={styles.headerContainer}>
-        <Pressable
-          onPress={() => router.dismiss()}
-          role="button"
-          style={styles.headerBtn}>
-          <Ionicons name="arrow-back" size={20} color={Colors.fontLight} />
-        </Pressable>
+  const CustomHeader = () => {
+    const { width: screenWidth } = useWindowDimensions();
+    const isNarrow = screenWidth < 500;
 
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>{board?.title}</Text>
-          <Text style={styles.headerSubtitle}>
-            {(board as any)?.users?.first_name
-              ? `${(board as any).users.first_name}ning ishchi joyi`
-              : 'Ishchi joy'}
-          </Text>
-        </View>
-
-        {/* Member Avatars */}
-        <View style={styles.avatarGroup}>
-          {members.slice(0, 3).map((member: any, index: number) => (
-            <View key={`header-member-${member?.id || index}`} style={[styles.avatarCircle, { left: index * -8 }]}>
-              {member?.avatar_url ? (
-                <Image source={{ uri: member.avatar_url }} style={styles.avatarImage} />
-              ) : (
-                <Text style={styles.avatarText}>
-                  {(member?.first_name || member?.email || 'U').charAt(0).toUpperCase()}
-                </Text>
-              )}
-            </View>
-          ))}
-          <Link href={`/board/invite?id=${id}`} asChild>
-            <View style={StyleSheet.flatten([styles.avatarCircle, { left: Math.min(members.length, 3) * -8, backgroundColor: Colors.primary }])}>
-              <Ionicons name="add" size={14} color="#FFF" />
-            </View>
-          </Link>
-        </View>
-
-        <View style={styles.headerActions}>
-          <Pressable 
-            onPress={() => setShowTeamModal(true)}
-            style={styles.headerIconBtn}>
-            <Ionicons name="people-outline" size={20} color={Colors.fontLight} />
-          </Pressable>
-          
+    return (
+      <View style={StyleSheet.flatten([styles.headerSolid, { paddingTop: Platform.OS === 'web' ? 16 : top }])}>
+        {/* Row 1: Back + Title */}
+        <View style={styles.headerRow}>
           <Pressable
-            onPress={() => setShowOnlyMine(!showOnlyMine)}
+            onPress={() => router.dismiss()}
             role="button"
-            style={[styles.headerBtn, showOnlyMine && { backgroundColor: Colors.primary }]}>
-            <Ionicons
-              name={showOnlyMine ? 'person' : 'person-outline'}
-              size={20}
-              color={showOnlyMine ? '#fff' : Colors.fontLight}
-            />
-            {Platform.OS === 'web' && (
-              <Text style={[styles.headerBtnText, showOnlyMine && { color: '#fff' }]}>
-                {showOnlyMine ? 'Mening vazifalarim' : 'Filtrlar'}
+            style={styles.headerBtn}>
+            <Ionicons name="arrow-back" size={20} color={Colors.fontLight} />
+          </Pressable>
+
+          <View style={{ flex: 1, marginHorizontal: 10 }}>
+            <Text style={styles.headerTitle} numberOfLines={1}>{board?.title}</Text>
+            {!isNarrow && (
+              <Text style={styles.headerSubtitle}>
+                {(board as any)?.users?.first_name
+                  ? `${(board as any).users.first_name}ning ishchi joyi`
+                  : 'Ishchi joy'}
               </Text>
             )}
-          </Pressable>
+          </View>
 
-          <Link href={`/board/settings?id=${id}`} asChild>
-            <View style={StyleSheet.flatten(styles.headerIconBtn)}>
-              <MaterialCommunityIcons name="dots-horizontal" size={20} color={Colors.fontLight} />
-            </View>
-          </Link>
+          {/* Member Avatars */}
+          <View style={styles.avatarGroup}>
+            {members.slice(0, isNarrow ? 2 : 3).map((member: any, index: number) => (
+              <View key={`header-member-${member?.id || member?.email || index}`} style={[styles.avatarCircle, { marginLeft: index > 0 ? -8 : 0 }]}>
+                {member?.avatar_url ? (
+                  <Image source={{ uri: member.avatar_url }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {(member?.first_name || member?.email || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </View>
+            ))}
+            <Link href={`/board/invite?id=${id}`} asChild>
+              <View style={StyleSheet.flatten([styles.avatarCircle, { marginLeft: -8, backgroundColor: Colors.primary }])}>
+                <Ionicons name="add" size={14} color="#FFF" />
+              </View>
+            </Link>
+          </View>
+
+          <View style={styles.headerActions}>
+            <Pressable 
+              onPress={() => setShowTeamModal(true)}
+              style={styles.headerIconBtn}>
+              <Ionicons name="people-outline" size={18} color={Colors.fontLight} />
+            </Pressable>
+            
+            <Pressable
+              onPress={() => setShowOnlyMine(!showOnlyMine)}
+              role="button"
+              style={[styles.headerIconBtn, showOnlyMine && { backgroundColor: Colors.primary }]}>
+              <Ionicons
+                name={showOnlyMine ? 'person' : 'person-outline'}
+                size={18}
+                color={showOnlyMine ? '#fff' : Colors.fontLight}
+              />
+            </Pressable>
+
+            <Link href={`/board/settings?id=${id}`} asChild>
+              <View style={StyleSheet.flatten(styles.headerIconBtn)}>
+                <MaterialCommunityIcons name="dots-horizontal" size={18} color={Colors.fontLight} />
+              </View>
+            </Link>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={{ backgroundColor: bg || Colors.background, paddingTop: headerHeight, flex: 1 }}>
@@ -156,7 +159,7 @@ const Page = () => {
                 <Text style={{ color: Colors.grey, textAlign: 'center', marginTop: 40 }}>Sizning jamoangizda hali xodimlar yoʻq</Text>
               ) : (
                 team.map((member, index) => (
-                  <View key={`team-member-${member.id || index}`} style={styles.teamMemberCard}>
+                  <View key={`team-member-${member.id || member.email || index}`} style={styles.teamMemberCard}>
                     <View style={styles.memberInfo}>
                       <Image source={{ uri: member.avatar_url }} style={styles.memberAvatar} />
                       <View>
@@ -186,85 +189,63 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.glassBorder,
   },
-  headerContainer: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    height: 56,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 48,
   },
   headerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    padding: 8,
     borderRadius: 8,
     backgroundColor: Colors.surfaceHover,
-    gap: 6,
-  },
-  headerBtnText: {
-    color: Colors.fontLight,
-    fontWeight: '500',
-    fontSize: 14,
   },
   headerTitle: {
     color: Colors.fontLight,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
   },
   headerSubtitle: {
     color: Colors.fontSecondary,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 1,
   },
   avatarGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 8,
   },
   avatarCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: Colors.surfaceHover,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  avatarImage: {
     width: 28,
     height: 28,
     borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: Colors.surfaceHover,
+  },
+  avatarImage: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
   },
   avatarText: {
     color: Colors.fontLight,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
     alignItems: 'center',
   },
   headerIconBtn: {
-    padding: 8,
+    padding: 7,
     borderRadius: 8,
     backgroundColor: Colors.surfaceHover,
     justifyContent: 'center',

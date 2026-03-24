@@ -4,7 +4,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSupabase } from '@/context/SupabaseContext';
 import { Board, TaskList, TaskListFake } from '@/types/enums';
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -96,7 +96,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   columnWrapper: {
-    width: Platform.OS === 'web' ? 320 : 300,
+    width: Math.min(Dimensions.get('window').width - 48, Platform.OS === 'web' ? 320 : 300),
   },
   addListContainer: {
     borderRadius: 12,

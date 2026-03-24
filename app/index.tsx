@@ -132,7 +132,11 @@ export default function Index() {
   );
 }
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width, height } = Dimensions.get('window');
+  const isSmall = width < 400;
+  const isShort = height < 700;
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -146,33 +150,33 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignSelf: 'center',
   },
   image: {
-    height: Math.min(width * 0.7, 300),
-    width: Math.min(width * 0.7, 300),
+    height: isShort ? Math.min(width * 0.45, 200) : Math.min(width * 0.6, 280),
+    width: isShort ? Math.min(width * 0.45, 200) : Math.min(width * 0.6, 280),
   },
   glassIntro: {
-    marginHorizontal: 30,
-    borderRadius: 24,
+    marginHorizontal: isSmall ? 20 : 30,
+    borderRadius: 22,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.glassBorder,
     backgroundColor: Colors.glassBackground,
-    padding: 24,
+    padding: isSmall ? 18 : 24,
   },
   introText: {
     fontWeight: '700',
     color: Colors.fontLight,
-    fontSize: 20,
+    fontSize: isSmall ? 17 : 20,
     textAlign: 'center',
-    lineHeight: 30,
+    lineHeight: isSmall ? 26 : 30,
     letterSpacing: 0.3,
   },
   bottomContainer: {
     width: '100%',
-    paddingHorizontal: 30,
-    gap: 12,
+    paddingHorizontal: isSmall ? 20 : 30,
+    gap: 10,
   },
   btn: {
-    paddingVertical: 16,
+    paddingVertical: isSmall ? 14 : 16,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -230,3 +234,4 @@ const getStyles = (Colors: any) => StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
+};

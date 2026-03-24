@@ -2,7 +2,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Image, Platform } from 'react-native';
+import { Image, Platform, Dimensions } from 'react-native';
 
 const Layout = () => {
   const Colors = useThemeColors();
@@ -16,8 +16,13 @@ const Layout = () => {
           borderTopColor: Colors.glassBorder,
           borderTopWidth: 1,
           elevation: 0,
-          paddingBottom: Platform.OS === 'web' ? 34 : 4,
-          height: Platform.OS === 'web' ? 84 : 56,
+          paddingBottom: Platform.OS === 'web' ? 8 : 4,
+          paddingTop: 4,
+          height: Platform.OS === 'web' ? 60 : 56,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
         },
         headerStyle: {
           backgroundColor: Colors.background,

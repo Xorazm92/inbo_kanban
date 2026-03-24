@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
@@ -91,13 +92,12 @@ const Page = () => {
         {(!selectedUserId || selectedUserId === role?.id) && (
           <View style={styles.inputCard}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { verticalAlign: 'top' }]}
               placeholder="Bugun nimalar qildingiz? (Ishlar, muammolar, natijalar...)"
               placeholderTextColor={Colors.grey}
               multiline
               value={content}
               onChangeText={setContent}
-              textAlignVertical="top"
             />
             <Pressable
               onPress={onSave}
@@ -168,8 +168,10 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) =>
-  StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors.background,
@@ -179,14 +181,14 @@ const getStyles = (Colors: any) =>
       alignItems: 'center',
     },
     scrollContent: {
-      padding: 16,
-      paddingBottom: 100,
+      padding: isSmall ? 12 : 16,
+      paddingBottom: 120,
     },
     header: {
       marginBottom: 20,
     },
     title: {
-      fontSize: 24,
+      fontSize: isSmall ? 20 : 24,
       fontWeight: '800',
       color: Colors.fontLight,
     },
@@ -209,10 +211,10 @@ const getStyles = (Colors: any) =>
       elevation: 5,
     },
     input: {
-      minHeight: 120,
-      fontSize: 16,
+      minHeight: isSmall ? 90 : 120,
+      fontSize: 15,
       color: Colors.fontLight,
-      marginBottom: 16,
+      marginBottom: 14,
     },
     saveBtn: {
       backgroundColor: Colors.primary,
@@ -301,5 +303,6 @@ const getStyles = (Colors: any) =>
       fontSize: 14,
     },
   });
+};
 
 export default Page;

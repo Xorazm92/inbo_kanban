@@ -4,7 +4,7 @@ import { useSupabase } from '@/context/SupabaseContext';
 import { Board } from '@/types/enums';
 import { Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, FlatList, StyleSheet, RefreshControl, Platform } from 'react-native';
+import { View, Text, Pressable, FlatList, StyleSheet, RefreshControl, Platform, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUser } from '@/context/ClerkContext';
 
@@ -222,7 +222,10 @@ const Page = () => {
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const { width } = Dimensions.get('window');
+  const isSmall = width < 400;
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -236,7 +239,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: 20,
   },
   greetingText: {
-    fontSize: 26,
+    fontSize: isSmall ? 22 : 26,
     fontWeight: '800',
     color: Colors.fontLight,
     letterSpacing: 0.3,
@@ -251,17 +254,19 @@ const getStyles = (Colors: any) => StyleSheet.create({
   // Stats
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
+    minWidth: isSmall ? '45%' : 100,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 14,
+    padding: 10,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
   },
@@ -315,7 +320,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
 
   // List
   listContent: {
-    padding: 20,
+    padding: isSmall ? 14 : 20,
     paddingBottom: 40,
     gap: 10,
   },
@@ -324,11 +329,11 @@ const getStyles = (Colors: any) => StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: isSmall ? 12 : 14,
     paddingRight: 12,
     backgroundColor: Colors.surface,
-    borderRadius: 20,
-    gap: 14,
+    borderRadius: 18,
+    gap: 12,
     borderWidth: 1,
     borderColor: Colors.glassBorder,
     ...Platform.select({
@@ -532,5 +537,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     color: Colors.fontSecondary,
   },
 });
+};
 
 export default Page;
